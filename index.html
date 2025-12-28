@@ -1,70 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Name Encoder</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f2f2f2;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        .container {
-            background: white;
-            width: 340px;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        .tabs {
-            display: flex;
-            margin-bottom: 15px;
-        }
-        .tab {
-            flex: 1;
-            padding: 10px;
-            cursor: pointer;
-            background: #ddd;
-            border: none;
-            font-weight: bold;
-        }
-        .tab.active {
-            background: #4CAF50;
-            color: white;
-        }
-        .content { display: none; }
-        .content.active { display: block; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Name Encoder</title>
 
-        input, button {
-            width: 100%;
-            padding: 10px;
-            margin-top: 8px;
-            box-sizing: border-box;
-        }
-        button {
-            background: #4CAF50;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        .result {
-            margin-top: 10px;
-            word-break: break-all;
-            font-weight: bold;
-        }
-        .error {
-            color: red;
-            font-weight: bold;
-        }
-    </style>
+<style>
+:root {
+    --bg: #f2f2f2;
+    --card: #ffffff;
+    --text: #000000;
+    --accent: #4CAF50;
+    --input: #ffffff;
+}
+
+body.dark {
+    --bg: #121212;
+    --card: #1e1e1e;
+    --text: #ffffff;
+    --accent: #66bb6a;
+    --input: #2a2a2a;
+}
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    transition: 0.3s;
+}
+
+.container {
+    background: var(--card);
+    width: 100%;
+    max-width: 380px;
+    padding: 20px;
+    border-radius: 16px;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.25);
+    transition: 0.3s;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.header h2 {
+    margin: 0;
+}
+
+.toggle {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.tabs {
+    display: flex;
+    margin-bottom: 10px;
+}
+
+.tab {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    background: #ccc;
+    transition: 0.3s;
+}
+
+.tab.active {
+    background: var(--accent);
+    color: white;
+}
+
+.content { display: none; }
+.content.active { display: block; }
+
+input, button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 8px;
+    border-radius: 10px;
+    border: none;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+input {
+    background: var(--input);
+    color: var(--text);
+}
+
+button.main {
+    background: var(--accent);
+    color: white;
+    cursor: pointer;
+}
+
+button.copy {
+    background: #777;
+    margin-top: 5px;
+}
+
+.result {
+    margin-top: 10px;
+    word-break: break-word;
+    font-weight: bold;
+}
+
+.error {
+    color: #ff5252;
+}
+</style>
 </head>
-<body>
 
+<body>
 <div class="container">
+
+    <div class="header">
+        <h2>🔐 Name Encoder</h2>
+        <button class="toggle" onclick="toggleDark()">🌙</button>
+    </div>
+
     <div class="tabs">
         <button class="tab active" onclick="showTab('encode')">Encode</button>
         <button class="tab" onclick="showTab('decode')">Decode</button>
@@ -72,35 +138,34 @@
 
     <!-- ENCODE -->
     <div id="encode" class="content active">
-        <input type="password" id="encodeKey" placeholder="Enter secret key">
-        <input type="text" id="encodeInput" placeholder="Enter text to encode">
-        <button onclick="encode()">Encode</button>
+        <input type="password" id="encodeKey" placeholder="Secret key">
+        <input type="text" id="encodeInput" placeholder="Text to encode">
+        <button class="main" onclick="encode()">Encode</button>
         <div class="result" id="encodeResult"></div>
+        <button class="copy" onclick="copyText('encodeResult')">Copy</button>
     </div>
 
     <!-- DECODE -->
     <div id="decode" class="content">
-        <input type="password" id="decodeKey" placeholder="Enter secret key">
-        <input type="text" id="decodeInput" placeholder="Enter encoded text">
-        <button onclick="decode()">Decode</button>
+        <input type="password" id="decodeKey" placeholder="Secret key">
+        <input type="text" id="decodeInput" placeholder="Encoded text">
+        <button class="main" onclick="decode()">Decode</button>
         <div class="result" id="decodeResult"></div>
+        <button class="copy" onclick="copyText('decodeResult')">Copy</button>
     </div>
+
 </div>
 
 <script>
-/* ===== REAL SECRET KEY ===== */
 const REAL_SECRET = "2025dec4_16_kanizsa";
+const ALPHABET = "abcdefghijklmnopqrstuvwxyz";
 
-/* ===== KEY FROM STRING ===== */
 function getKey(secret) {
-    let key = 0;
-    for (let i = 0; i < secret.length; i++) {
-        key += secret.charCodeAt(i);
-    }
-    return key % 256;
+    let k = 0;
+    for (let c of secret) k += c.charCodeAt(0);
+    return k % 26;
 }
 
-/* ===== TAB SWITCH ===== */
 function showTab(tab) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
@@ -108,62 +173,68 @@ function showTab(tab) {
     document.getElementById(tab).classList.add('active');
 }
 
-/* ===== ENCODE ===== */
 function encode() {
-    let userKey = document.getElementById("encodeKey").value;
-    let text = document.getElementById("encodeInput").value;
+    let keyInput = document.getElementById("encodeKey").value;
+    let text = document.getElementById("encodeInput").value.toLowerCase();
 
-    if (userKey !== REAL_SECRET) {
-        document.getElementById("encodeResult").innerHTML =
-            "<span class='error'>Wrong secret key!</span>";
+    if (keyInput !== REAL_SECRET) {
+        document.getElementById("encodeResult").innerHTML = "<span class='error'>Wrong key</span>";
         return;
     }
 
-    let key = getKey(userKey);
-    let shifted = "";
+    let key = getKey(keyInput);
+    let result = "";
+
     for (let i = 0; i < text.length; i++) {
-        shifted += String.fromCharCode((text.charCodeAt(i) + key) % 256);
+        let c = text.charCodeAt(i);
+        if (c < 97 || c > 122) {
+            document.getElementById("encodeResult").innerHTML =
+                "<span class='error'>Only letters allowed</span>";
+            return;
+        }
+        let v = (c - 97 + key + i) % 26;
+        result += ALPHABET[v];
     }
 
-    let xored = "";
-    for (let i = 0; i < shifted.length; i++) {
-        xored += String.fromCharCode(shifted.charCodeAt(i) ^ key);
-    }
+    if (Math.random() < 0.5)
+        result = result[0].toUpperCase() + result.slice(1);
 
-    let encoded = btoa(xored);
-    document.getElementById("encodeResult").innerText = "Encoded: " + encoded;
+    document.getElementById("encodeResult").innerText = result;
 }
 
-/* ===== DECODE ===== */
 function decode() {
-    let userKey = document.getElementById("decodeKey").value;
-    let encoded = document.getElementById("decodeInput").value;
+    let keyInput = document.getElementById("decodeKey").value;
+    let text = document.getElementById("decodeInput").value.toLowerCase();
 
-    if (userKey !== REAL_SECRET) {
-        document.getElementById("decodeResult").innerHTML =
-            "<span class='error'>Wrong secret key!</span>";
+    if (keyInput !== REAL_SECRET) {
+        document.getElementById("decodeResult").innerHTML = "<span class='error'>Wrong key</span>";
         return;
     }
 
-    try {
-        let key = getKey(userKey);
-        let xored = atob(encoded);
-        let shifted = "";
+    let key = getKey(keyInput);
+    let result = "";
 
-        for (let i = 0; i < xored.length; i++) {
-            shifted += String.fromCharCode(xored.charCodeAt(i) ^ key);
+    for (let i = 0; i < text.length; i++) {
+        let idx = ALPHABET.indexOf(text[i]);
+        if (idx === -1) {
+            document.getElementById("decodeResult").innerHTML =
+                "<span class='error'>Invalid text</span>";
+            return;
         }
-
-        let original = "";
-        for (let i = 0; i < shifted.length; i++) {
-            original += String.fromCharCode((shifted.charCodeAt(i) - key + 256) % 256);
-        }
-
-        document.getElementById("decodeResult").innerText = "Decoded: " + original;
-    } catch {
-        document.getElementById("decodeResult").innerHTML =
-            "<span class='error'>Invalid encoded text</span>";
+        let c = (idx - key - i + 260) % 26;
+        result += String.fromCharCode(c + 97);
     }
+
+    document.getElementById("decodeResult").innerText = result;
+}
+
+function copyText(id) {
+    let text = document.getElementById(id).innerText;
+    navigator.clipboard.writeText(text);
+}
+
+function toggleDark() {
+    document.body.classList.toggle("dark");
 }
 </script>
 
