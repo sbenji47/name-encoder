@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Name Encoder</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f2f2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background: white;
+            width: 340px;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        .tab {
+            flex: 1;
+            padding: 10px;
+            cursor: pointer;
+            background: #ddd;
+            border: none;
+            font-weight: bold;
+        }
+        .tab.active {
+            background: #4CAF50;
+            color: white;
+        }
+        .content { display: none; }
+        .content.active { display: block; }
+
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 8px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .result {
+            margin-top: 10px;
+            word-break: break-all;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="tabs">
+        <button class="tab active" onclick="showTab('encode')">Encode</button>
+        <button class="tab" onclick="showTab('decode')">Decode</button>
+    </div>
+
+    <!-- ENCODE -->
+    <div id="encode" class="content active">
+        <input type="password" id="encodeKey" placeholder="Enter secret key">
+        <input type="text" id="encodeInput" placeholder="Enter text to encode">
+        <button onclick="encode()">Encode</button>
+        <div class="result" id="encodeResult"></div>
+    </div>
+
+    <!-- DECODE -->
+    <div id="decode" class="content">
+        <input type="password" id="decodeKey" placeholder="Enter secret key">
+        <input type="text" id="decodeInput" placeholder="Enter encoded text">
+        <button onclick="decode()">Decode</button>
+        <div class="result" id="decodeResult"></div>
+    </div>
+</div>
+
+<script>
+/* ===== REAL SECRET KEY ===== */
+const REAL_SECRET = "2025dec4_16_kanizsa";
+
+/* ===== KEY FROM STRING ===== */
+function getKey(secret) {
+    let key = 0;
+    for (let i = 0; i < secret.length; i++) {
+        key += secret.charCodeAt(i);
+    }
+    return key % 256;
+}
+
+/* ===== TAB SWITCH ===== */
+function showTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+    document.querySelector(`button[onclick="showTab('${tab}')"]`).classList.add('active');
+    document.getElementById(tab).classList.add('active');
+}
+
+/* ===== ENCODE ===== */
+function encode() {
+    let userKey = document.getElementById("encodeKey").value;
+    let text = document.getElementById("encodeInput").value;
+
+    if (userKey !== REAL_SECRET) {
+        document.getElementById("encodeResult").innerHTML =
+            "<span class='error'>Wrong secret key!</span>";
+        return;
+    }
+
+    let key = getKey(userKey);
+    let shifted = "";
+    for (let i = 0; i < text.length; i++) {
+        shifted += String.fromCharCode((text.charCodeAt(i) + key) % 256);
+    }
+
+    let xored = "";
+    for (let i = 0; i < shifted.length; i++) {
+        xored += String.fromCharCode(shifted.charCodeAt(i) ^ key);
+    }
+
+    let encoded = btoa(xored);
+    document.getElementById("encodeResult").innerText = "Encoded: " + encoded;
+}
+
+/* ===== DECODE ===== */
+function decode() {
+    let userKey = document.getElementById("decodeKey").value;
+    let encoded = document.getElementById("decodeInput").value;
+
+    if (userKey !== REAL_SECRET) {
+        document.getElementById("decodeResult").innerHTML =
+            "<span class='error'>Wrong secret key!</span>";
+        return;
+    }
+
+    try {
+        let key = getKey(userKey);
+        let xored = atob(encoded);
+        let shifted = "";
+
+        for (let i = 0; i < xored.length; i++) {
+            shifted += String.fromCharCode(xored.charCodeAt(i) ^ key);
+        }
+
+        let original = "";
+        for (let i = 0; i < shifted.length; i++) {
+            original += String.fromCharCode((shifted.charCodeAt(i) - key + 256) % 256);
+        }
+
+        document.getElementById("decodeResult").innerText = "Decoded: " + original;
+    } catch {
+        document.getElementById("decodeResult").innerHTML =
+            "<span class='error'>Invalid encoded text</span>";
+    }
+}
+</script>
+
+</body>
+</html>
